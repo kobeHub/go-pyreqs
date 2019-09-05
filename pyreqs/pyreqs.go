@@ -138,14 +138,20 @@ func GetAllImports(root string, extraIgnoreDirs ...string) ([]string, error) {
 					item = strings.TrimSpace(item[6:])
 					for _, word := range strings.Split(item, ",") {
 						library = regex3.FindString(strings.TrimSpace(word))
+
+						if strings.Contains(library, ".") {
+							library = strings.Split(library, ".")[0]
+						}
+						importList = append(importList, library)
 					}
 				} else {
 					library = strings.TrimSpace(strings.Split(item, " ")[1])
+
+					if strings.Contains(library, ".") {
+						library = strings.Split(library, ".")[0]
+					}
+					importList = append(importList, library)
 				}
-				if strings.Contains(library, ".") {
-					library = strings.Split(library, ".")[0]
-				}
-				importList = append(importList, library)
 			}
 			for _, item := range regex2.FindAllString(line, -1) {
 				item = strings.TrimSpace(item)
@@ -183,6 +189,9 @@ func getPkgName(importList []string) (pkgs []string) {
 	}
 
 	for _, item := range importList {
+		if item == "tensorflow" {
+			pkgs = append(pkgs, "tensorflow-gpu")
+		}
 		if i, ok := dict[item]; ok {
 			pkgs = append(pkgs, i)
 		} else {
@@ -243,4 +252,19 @@ func GetRequirementsRemote(url string, accessToken string, ignoreDirs ...string)
 	imports, err := GetAllImports(dirName, ignoreDirs...)
 	os.RemoveAll(dirName)
 	return GetRequirementsLocal(imports, "https://pypi.org/pypi")
+}
+
+func ToFile(requires []string, filePath string) {
+	fd, err := os.Create(filePath)
+	if err != nil {
+		panic(err)
+	}
+	defer fd.Close()
+
+	for _, item := range requires {
+		_, err := fd.WriteString(item + "\n")
+		if err != nil {
+			panic(err)
+		}
+	}
 }
