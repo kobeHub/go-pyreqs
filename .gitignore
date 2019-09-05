@@ -1,0 +1,6 @@
+/test
+go.sum
+go.mod
+main.go
+cache.go
+image.go
